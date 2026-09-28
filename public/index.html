@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Task Manager</title>
+</head>
+<body>
+  <h1>Task Manager</h1>
+  <form id="task-form">
+    <input id="task-title" placeholder="New task" autocomplete="off">
+    <button id="add-task" type="submit">Add</button>
+  </form>
+  <p id="error" role="alert"></p>
+  <ul id="task-list"></ul>
+
+  <script>
+    const list = document.getElementById('task-list');
+    const error = document.getElementById('error');
+
+    async function loadTasks() {
+      const res = await fetch('/tasks');
+      const tasks = await res.json();
+      list.innerHTML = '';
+      for (const task of tasks) {
+        const li = document.createElement('li');
+        li.textContent = task.title;
+        list.appendChild(li);
+      }
+    }
+
+    document.getElementById('task-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('task-title');
+      const res = await fetch('/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: input.value })
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        error.textContent = body.errors.join(', ');
+        return;
+      }
+      error.textContent = '';
+      input.value = '';
+      loadTasks();
+    });
+
+    loadTasks();
+  </script>
+</body>
+</html>
