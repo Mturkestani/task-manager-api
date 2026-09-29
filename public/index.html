@@ -7,15 +7,18 @@
   <style>
     /* ---------- Colours (change them here once, used everywhere) ---------- */
     :root {
-      --bg: #f4f5fb;
+      --bg: #eef0f7;
       --card: #ffffff;
       --text: #1f2330;
       --muted: #7a8094;
-      --border: #e3e6ef;
+      --border: #e6e8f0;
+      --hover: #f7f8fc;
       --primary: #5b5bd6;
       --primary-hover: #4a4ac4;
-      --error: #d64545;
-      --error-bg: #fdecec;
+      --primary-soft: rgba(91, 91, 214, 0.15);
+      --done: #a3a8b8;
+      --danger: #d64545;
+      --danger-bg: #fdecec;
     }
 
     /* ---------- Page ---------- */
@@ -29,7 +32,7 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 64px 16px;
+      padding: 72px 16px;
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -38,20 +41,26 @@
     /* ---------- Card ---------- */
     .card {
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       background: var(--card);
-      border-radius: 16px;
-      padding: 32px;
-      box-shadow: 0 10px 30px rgba(31, 35, 48, 0.08);
+      border-radius: 20px;
+      box-shadow: 0 20px 45px rgba(31, 35, 48, 0.08);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 32px 32px 24px;
+      border-bottom: 1px solid var(--border);
     }
 
     h1 {
       margin: 0;
       font-size: 28px;
+      letter-spacing: -0.3px;
     }
 
     .subtitle {
-      margin: 4px 0 24px;
+      margin: 6px 0 24px;
       color: var(--muted);
     }
 
@@ -61,32 +70,35 @@
       gap: 8px;
     }
 
-    input {
+    #task-title {
       flex: 1;
+      min-width: 0;
       padding: 12px 14px;
       font-size: 16px;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    input:focus {
+    #task-title:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(91, 91, 214, 0.15);
+      box-shadow: 0 0 0 4px var(--primary-soft);
     }
 
-    button {
-      padding: 12px 20px;
+    #add-task {
+      padding: 12px 22px;
       font-size: 16px;
       font-weight: 600;
       color: #fff;
       background: var(--primary);
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
+      transition: background 0.15s;
     }
 
-    button:hover {
+    #add-task:hover {
       background: var(--primary-hover);
     }
 
@@ -94,9 +106,9 @@
     #error {
       margin: 12px 0 0;
       padding: 10px 14px;
-      color: var(--error);
-      background: var(--error-bg);
-      border-radius: 8px;
+      color: var(--danger);
+      background: var(--danger-bg);
+      border-radius: 10px;
       font-size: 14px;
     }
 
@@ -107,67 +119,164 @@
     /* ---------- Task list ---------- */
     #task-list {
       list-style: none;
-      margin: 24px 0 0;
-      padding: 0;
+      margin: 0;
+      padding: 8px 16px;
     }
 
     #task-list li {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 14px 4px;
-      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 12px;
+      transition: background 0.15s;
     }
 
-    #task-list li:last-child {
-      border-bottom: none;
+    #task-list li:hover {
+      background: var(--hover);
     }
 
-    #task-list li::before {
-      content: "";
-      width: 18px;
-      height: 18px;
+    /* Checkbox: mark a task as done */
+    .task-toggle {
+      width: 20px;
+      height: 20px;
       flex-shrink: 0;
-      border: 2px solid var(--primary);
-      border-radius: 50%;
+      margin: 0;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .task-title {
+      flex: 1;
+      word-break: break-word;
+    }
+
+    /* A finished task: grey and crossed out */
+    #task-list li.done .task-title {
+      color: var(--done);
+      text-decoration: line-through;
+    }
+
+    /* Delete button: hidden until you hover the task */
+    .task-delete {
+      padding: 6px 10px;
+      font-size: 13px;
+      color: var(--danger);
+      background: none;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s;
+    }
+
+    #task-list li:hover .task-delete,
+    .task-delete:focus {
+      opacity: 1;
+    }
+
+    .task-delete:hover {
+      background: var(--danger-bg);
     }
 
     #task-list:empty::after {
       content: "No tasks yet — add your first one above.";
       display: block;
-      padding: 24px 0 8px;
+      padding: 32px 0 24px;
       text-align: center;
       color: var(--muted);
+    }
+
+    /* ---------- Footer: how many tasks are left ---------- */
+    .card-footer {
+      padding: 14px 32px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card-footer:has(#task-count:empty) {
+      display: none; /* no tasks → no footer */
     }
   </style>
 </head>
 <body>
   <main class="card">
-    <h1>Task Manager</h1>
-    <p class="subtitle">Keep track of what you need to do.</p>
+    <header class="card-header">
+      <h1>Task Manager</h1>
+      <p class="subtitle">Keep track of what you need to do.</p>
 
-    <form id="task-form">
-      <input id="task-title" placeholder="What do you need to do?" autocomplete="off">
-      <button id="add-task" type="submit">Add</button>
-    </form>
-    <p id="error" role="alert"></p>
+      <form id="task-form">
+        <input id="task-title" placeholder="What do you need to do?" autocomplete="off">
+        <button id="add-task" type="submit">Add</button>
+      </form>
+      <p id="error" role="alert"></p>
+    </header>
 
     <ul id="task-list"></ul>
+
+    <footer class="card-footer">
+      <span id="task-count"></span>
+    </footer>
   </main>
 
   <script>
     const list = document.getElementById('task-list');
     const error = document.getElementById('error');
+    const count = document.getElementById('task-count');
+
+    // Build one <li> for a task: checkbox + title + delete button.
+    function renderTask(task) {
+      const li = document.createElement('li');
+      if (task.done) li.classList.add('done');
+
+      const toggle = document.createElement('input');
+      toggle.type = 'checkbox';
+      toggle.className = 'task-toggle';
+      toggle.checked = task.done;
+      toggle.setAttribute('aria-label', `Mark "${task.title}" as done`);
+      toggle.addEventListener('change', () => updateTask(task.id, { done: toggle.checked }));
+
+      const title = document.createElement('span');
+      title.className = 'task-title';
+      title.textContent = task.title;
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'task-delete';
+      del.textContent = 'Delete';
+      del.setAttribute('aria-label', `Delete "${task.title}"`);
+      del.addEventListener('click', () => deleteTask(task.id));
+
+      li.append(toggle, title, del);
+      return li;
+    }
 
     async function loadTasks() {
       const res = await fetch('/tasks');
       const tasks = await res.json();
+
       list.innerHTML = '';
       for (const task of tasks) {
-        const li = document.createElement('li');
-        li.textContent = task.title;
-        list.appendChild(li);
+        list.appendChild(renderTask(task));
       }
+
+      const left = tasks.filter((t) => !t.done).length;
+      count.textContent = tasks.length === 0 ? '' : `${left} ${left === 1 ? 'task' : 'tasks'} left`;
+    }
+
+    async function updateTask(id, changes) {
+      await fetch(`/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(changes)
+      });
+      loadTasks();
+    }
+
+    async function deleteTask(id) {
+      await fetch(`/tasks/${id}`, { method: 'DELETE' });
+      loadTasks();
     }
 
     document.getElementById('task-form').addEventListener('submit', async (e) => {

@@ -47,9 +47,25 @@ async function addTask(title) {
   await page.click('#add-task');
 }
 
-// Helper: read the text of every task shown in the list.
+// Helper: read the title of every task shown in the list.
+// Reads only .task-title, so other text in the row (like the Delete button) is ignored.
 async function visibleTasks() {
-  return page.$$eval('#task-list li', (items) => items.map((li) => li.textContent));
+  return page.$$eval('#task-list .task-title', (items) => items.map((el) => el.textContent));
+}
+
+// Helper: wait until the list shows exactly `n` tasks.
+async function waitForTaskCount(n) {
+  await page.waitForFunction(
+    (expected) => document.querySelectorAll('#task-list li').length === expected,
+    {},
+    n
+  );
+}
+
+// Helper: read the tasks straight from the API (to check the change was really saved).
+async function savedTasks() {
+  const res = await fetch(`${baseUrl}/tasks`);
+  return res.json();
 }
 
 test('page shows the title "Task Manager"', async () => {
@@ -113,4 +129,96 @@ test('tasks are still there after reloading the page', async () => {
   await page.waitForSelector('#task-list li');
 
   expect(await visibleTasks()).toEqual(['Buy milk']);
+});
+
+describe('mark as done', () => {
+  test('ticking the checkbox marks the task as done', async () => {
+    await addTask('Buy milk');
+    await waitForTaskCount(1);
+
+    await page.click('#task-list li .task-toggle');
+    await page.waitForSelector('#task-list li.done');
+
+    const saved = await savedTasks();
+    expect(saved[0].done).toBe(true);
+  });
+
+  test('unticking the checkbox marks the task as not done', async () => {
+    await addTask('Buy milk');
+    await waitForTaskCount(1);
+
+    await page.click('#task-list li .task-toggle');
+    await page.waitForSelector('#task-list li.done');
+    await page.click('#task-list li .task-toggle');
+    await page.waitForSelector('#task-list li:not(.done)');
+
+    const saved = await savedTasks();
+    expect(saved[0].done).toBe(false);
+  });
+
+  test('a done task stays done after reloading the page', async () => {
+    await addTask('Buy milk');
+    await waitForTaskCount(1);
+    await page.click('#task-list li .task-toggle');
+    await page.waitForSelector('#task-list li.done');
+
+    await page.reload();
+    await page.waitForSelector('#task-list li.done');
+
+    const checked = await page.$eval('#task-list li .task-toggle', (el) => el.checked);
+    expect(checked).toBe(true);
+  });
+});
+
+describe('tasks-left counter', () => {
+  test('shows how many tasks are not done yet', async () => {
+    await addTask('Buy milk');
+    await waitForTaskCount(1);
+    await addTask('Finish CV');
+    await waitForTaskCount(2);
+
+    const text = await page.$eval('#task-count', (el) => el.textContent);
+    expect(text).toBe('2 tasks left');
+  });
+
+  test('goes down when a task is marked as done', async () => {
+    await addTask('Buy milk');
+    await waitForTaskCount(1);
+    await addTask('Finish CV');
+    await waitForTaskCount(2);
+
+    await page.click('#task-list li:first-child .task-toggle');
+    await page.waitForFunction(
+      () => document.querySelector('#task-count').textContent === '1 task left'
+    );
+  });
+});
+
+describe('delete', () => {
+  test('clicking Delete removes the task from the page and the server', async () => {
+    await addTask('Buy milk');
+    await waitForTaskCount(1);
+
+    await page.hover('#task-list li');
+    await page.click('#task-list li .task-delete');
+    await waitForTaskCount(0);
+
+    expect(await visibleTasks()).toEqual([]);
+    expect(await savedTasks()).toEqual([]);
+  });
+
+  test('deletes only the chosen task', async () => {
+    await addTask('A');
+    await waitForTaskCount(1);
+    await addTask('B');
+    await waitForTaskCount(2);
+    await addTask('C');
+    await waitForTaskCount(3);
+
+    await page.hover('#task-list li:nth-child(2)');
+    await page.click('#task-list li:nth-child(2) .task-delete');
+    await waitForTaskCount(2);
+
+    expect(await visibleTasks()).toEqual(['A', 'C']);
+  });
 });

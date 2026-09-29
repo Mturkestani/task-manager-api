@@ -12,3 +12,9 @@
 | TC-08 | Delete task | Delete an existing task | DELETE /tasks/:id | 204, task no longer in GET /tasks | API | Automated |
 | TC-09 | UI | Add an empty task | Click Add with an empty input | Error message shown | E2E | Automated |
 | TC-10 | Performance | Smoke load | k6, 5 users for 10 s on GET /tasks | < 1% errors, p95 < 300 ms | Load | Automated |
+| TC-11 | UI | Mark a task as done | Tick the checkbox | Task is crossed out; saved as `done: true` | E2E | Automated |
+| TC-12 | UI | Mark a task as not done | Untick the checkbox | Task is no longer crossed out; saved as `done: false` | E2E | Automated |
+| TC-13 | UI | Done state survives a reload | Tick a task, reload the page | Checkbox is still ticked | E2E | Automated |
+| TC-14 | UI | Tasks-left counter | Add 2 tasks, then tick one | Shows "2 tasks left", then "1 task left" | E2E | Automated |
+| TC-15 | UI | Delete a task | Hover a task, click Delete | Task disappears from the page and from GET /tasks | E2E | Automated |
+| TC-16 | UI | Delete only the chosen task | Add A, B, C; delete B | List shows A and C | E2E | Automated |
